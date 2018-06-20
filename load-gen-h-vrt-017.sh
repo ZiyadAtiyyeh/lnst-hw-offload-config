@@ -1,10 +1,10 @@
 #!/bin/bash
 
-CX4=p1p1
-CX4_2=p1p2
+CX4=enp130s0f0
+CX4_2=enp130s0f1
 
 CX5=p1p1
-CX5_2=p1p2
+CX5_2=enp130s0f1
 
 if [ "$1" == "cx5" ]; then
     nic=$CX5
@@ -34,7 +34,13 @@ function set_mode() {
     local pci=$(basename `readlink /sys/class/net/$1/device`)
 
     if [ "$devlink_compat" = 1 ]; then
-        echo $2 > /sys/kernel/debug/mlx5/$pci/compat/mode
+            if [ -e /sys/class/net/$nic/compat/devlink ]; then
+                echo $2 > /sys/class/net/$nic/compat/devlink/mode
+            elif [ -e /sys/kernel/debug/mlx5/$pci/compat ]; then
+                echo $2 > /sys/kernel/debug/mlx5/$pci/compat/mode
+            else
+                echo "error setting $2 mode for $nic1"
+            fi
     else
         devlink dev eswitch set pci/$pci mode $2
     fi
@@ -44,7 +50,11 @@ function set_eswitch_inline_mode() {
     local pci=$(basename `readlink /sys/class/net/$1/device`)
 
     if [ "$devlink_compat" = 1 ]; then
-        echo $2 > /sys/kernel/debug/mlx5/$pci/compat/inline
+            if [ -e /sys/kernel/debug/mlx5/$PCI/compat ]; then
+                echo $2 > /sys/kernel/debug/mlx5/\$pci/compat/inline
+            elif [ -e /sys/class/net/$NIC/compat/devlink ]; then
+                echo $2 > /sys/class/net/\$nic/compat/devlink/inline
+            fi
     else
         devlink dev eswitch set pci/$pci inline-mode $2
     fi
@@ -107,7 +117,7 @@ function stop_vms() {
 
 function start_vms() {
     echo "Start vms"
-    for i in $vms; do virsh -q start ${hv}-00${i}-RH-7.5 ; done
+    for i in $vms; do virsh -q start ${hv}-00${i}-RH-7.2 ; done
 }
 
 function wait_vms() {
@@ -123,7 +133,7 @@ function wait_vm() {
 
     for i in 1 2 3 4; do
         ping -q -w 1 -c 1 $vm && break
-        sleep 10
+        sleep 12
     done
 
     sleep 10 ; # wait little more for lnst to be up

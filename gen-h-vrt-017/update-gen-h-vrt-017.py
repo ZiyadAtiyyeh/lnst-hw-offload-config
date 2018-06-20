@@ -11,7 +11,6 @@ import xml.etree.ElementTree as ET
 host = 'gen-h-vrt-017'
 xml = 'gen-h-vrt-017/gen-h-vrt-017.xml'
 
-
 AF_LINK = 17
 
 if not os.path.exists(xml):
